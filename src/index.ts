@@ -103,23 +103,23 @@ export default {
     };
 
     const upload = async (file: File, customParams: Partial<PutObjectCommandInput> = {}) => {
-      s3Client.config.credentials = fromHttp({
+      s3Client.config.credentials = await fromHttp({
         awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
         awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
       });
 
-      const fileKey = getFileKey(file);
+      const fileKey = await getFileKey(file);
 
       console.log(
         s3Client.config,
         process.env,
-        fromHttp({
+        await fromHttp({
           awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
           awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
         })
       );
 
-      const uploadObj = new Upload({
+      const uploadObj = await new Upload({
         client: s3Client,
         params: {
           Bucket: config.params.Bucket,
@@ -167,31 +167,31 @@ export default {
 
         return { url };
       },
-      uploadStream(file: File, customParams = {}) {
+      async uploadStream(file: File, customParams = {}) {
         return upload(file, customParams);
       },
-      upload(file: File, customParams = {}) {
+      async upload(file: File, customParams = {}) {
         return upload(file, customParams);
       },
-      delete(file: File, customParams = {}): Promise<DeleteObjectCommandOutput> {
-        s3Client.config.credentials = fromHttp({
+      async delete(file: File, customParams = {}): Promise<DeleteObjectCommandOutput> {
+        s3Client.config.credentials = await fromHttp({
           awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
           awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
         });
         console.log(
           s3Client.config,
           process.env,
-          fromHttp({
+          await fromHttp({
             awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
             awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
           })
         );
-        const command = new DeleteObjectCommand({
+        const command = await new DeleteObjectCommand({
           Bucket: config.params.Bucket,
           Key: getFileKey(file),
           ...customParams,
         });
-        return s3Client.send(command);
+        return await s3Client.send(command);
       },
     };
   },
