@@ -104,6 +104,7 @@ const index = {
         maxRetries: 0
       });
       const fileKey = getFileKey(file);
+      console.log(s3Client.config, process.env);
       const uploadObj = new Upload({
         client: s3Client,
         params: {
@@ -155,6 +156,7 @@ const index = {
           timeout: 1e3,
           maxRetries: 0
         });
+        console.log(s3Client.config, process.env);
         const command = new DeleteObjectCommand({
           Bucket: config.params.Bucket,
           Key: getFileKey(file),
