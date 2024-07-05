@@ -1,6 +1,6 @@
 import { getOr } from "lodash/fp";
 import { S3Client, GetObjectCommand, DeleteObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
-import { fromHttp } from "@aws-sdk/credential-providers";
+import { fromContainerMetadata } from "@aws-sdk/credential-providers";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 const ENDPOINT_PATTERN = /^(.+\.)?s3[.-]([a-z0-9-]+)\./;
@@ -92,26 +92,20 @@ const getConfig = ({ baseUrl, rootPath, s3Options, ...legacyS3Options }) => {
 const index = {
   init({ baseUrl, rootPath, s3Options, ...legacyS3Options }) {
     const config = getConfig({ baseUrl, rootPath, s3Options, ...legacyS3Options });
-    const s3Client = new S3Client(config);
     const filePrefix = rootPath ? `${rootPath.replace(/\/+$/, "")}/` : "";
     const getFileKey = (file) => {
       const path = file.path ? `${file.path}/` : "";
       return `${filePrefix}${path}${file.hash}${file.ext}`;
     };
     const upload = async (file, customParams = {}) => {
-      s3Client.config.credentials = await fromHttp({
-        awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-        awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+      const s3Client = new S3Client({
+        ...config,
+        credentials: fromContainerMetadata({
+          maxRetries: 3,
+          timeout: 0
+        })
       });
       const fileKey = await getFileKey(file);
-      console.log(
-        s3Client.config,
-        process.env,
-        await fromHttp({
-          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
-        })
-      );
       const uploadObj = await new Upload({
         client: s3Client,
         params: {
@@ -135,6 +129,13 @@ const index = {
         return config.params.ACL === "private";
       },
       async getSignedUrl(file, customParams) {
+        const s3Client = new S3Client({
+          ...config,
+          credentials: fromContainerMetadata({
+            maxRetries: 3,
+            timeout: 0
+          })
+        });
         if (!isUrlFromBucket(file.url, config.params.Bucket, baseUrl)) {
           return { url: file.url };
         }
@@ -159,18 +160,13 @@ const index = {
         return upload(file, customParams);
       },
       async delete(file, customParams = {}) {
-        s3Client.config.credentials = await fromHttp({
-          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
-        });
-        console.log(
-          s3Client.config,
-          process.env,
-          await fromHttp({
-            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+        const s3Client = new S3Client({
+          ...config,
+          credentials: fromContainerMetadata({
+            maxRetries: 3,
+            timeout: 0
           })
-        );
+        });
         const command = await new DeleteObjectCommand({
           Bucket: config.params.Bucket,
           Key: getFileKey(file),
