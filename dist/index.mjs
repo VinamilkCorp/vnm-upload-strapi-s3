@@ -1,6 +1,6 @@
 import { getOr } from "lodash/fp";
 import { S3Client, GetObjectCommand, DeleteObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
-import { fromContainerMetadata } from "@aws-sdk/credential-providers";
+import { fromHttp } from "@aws-sdk/credential-providers";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
 const ENDPOINT_PATTERN = /^(.+\.)?s3[.-]([a-z0-9-]+)\./;
@@ -100,9 +100,9 @@ const index = {
     const upload = async (file, customParams = {}) => {
       const s3Client = new S3Client({
         ...config,
-        credentials: fromContainerMetadata({
-          maxRetries: 3,
-          timeout: 0
+        credentials: fromHttp({
+          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
         })
       });
       const fileKey = await getFileKey(file);
@@ -131,9 +131,9 @@ const index = {
       async getSignedUrl(file, customParams) {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromContainerMetadata({
-            maxRetries: 3,
-            timeout: 0
+          credentials: fromHttp({
+            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
           })
         });
         if (!isUrlFromBucket(file.url, config.params.Bucket, baseUrl)) {
@@ -162,9 +162,9 @@ const index = {
       async delete(file, customParams = {}) {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromContainerMetadata({
-            maxRetries: 3,
-            timeout: 0
+          credentials: fromHttp({
+            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
           })
         });
         const command = await new DeleteObjectCommand({
