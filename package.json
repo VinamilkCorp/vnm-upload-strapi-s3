@@ -8,27 +8,6 @@
     "s3",
     "strapi"
   ],
-  "homepage": "https://strapi.io",
-  "bugs": {
-    "url": "https://github.com/strapi/strapi/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/strapi/strapi.git"
-  },
-  "license": "SEE LICENSE IN LICENSE",
-  "author": {
-    "name": "Strapi Solutions SAS",
-    "email": "hi@strapi.io",
-    "url": "https://strapi.io"
-  },
-  "maintainers": [
-    {
-      "name": "Strapi Solutions SAS",
-      "email": "hi@strapi.io",
-      "url": "https://strapi.io"
-    }
-  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "source": "./src/index.ts",
@@ -56,7 +35,7 @@
     "@strapi/pack-up": "4.23.0",
     "@types/jest": "29.5.2",
     "eslint-config-custom": "0.0.0",
-    "tsconfig": "4.25.1"
+    "tsconfig": "7.0.0"
   },
   "engines": {
     "node": ">=18.0.0 <=20.x.x",
