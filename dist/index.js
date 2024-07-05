@@ -100,12 +100,19 @@ const index = {
       return `${filePrefix}${path}${file.hash}${file.ext}`;
     };
     const upload = async (file, customParams = {}) => {
-      s3Client.config.credentials = credentialProviders.fromContainerMetadata({
-        timeout: 1e3,
-        maxRetries: 0
+      s3Client.config.credentials = credentialProviders.fromHttp({
+        awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+        awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
       });
       const fileKey = getFileKey(file);
-      console.log(s3Client.config, process.env);
+      console.log(
+        s3Client.config,
+        process.env,
+        credentialProviders.fromHttp({
+          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+        })
+      );
       const uploadObj = new libStorage.Upload({
         client: s3Client,
         params: {
@@ -153,11 +160,18 @@ const index = {
         return upload(file, customParams);
       },
       delete(file, customParams = {}) {
-        s3Client.config.credentials = credentialProviders.fromContainerMetadata({
-          timeout: 1e3,
-          maxRetries: 0
+        s3Client.config.credentials = credentialProviders.fromHttp({
+          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
         });
-        console.log(s3Client.config, process.env);
+        console.log(
+          s3Client.config,
+          process.env,
+          credentialProviders.fromHttp({
+            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+          })
+        );
         const command = new clientS3.DeleteObjectCommand({
           Bucket: config.params.Bucket,
           Key: getFileKey(file),
