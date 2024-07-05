@@ -11,7 +11,7 @@ import {
   S3ClientConfig,
   ObjectCannedACL,
 } from '@aws-sdk/client-s3';
-import { fromContainerMetadata } from '@aws-sdk/credential-providers';
+import { fromHttp } from '@aws-sdk/credential-providers';
 import type { AwsCredentialIdentity } from '@aws-sdk/types';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -105,9 +105,9 @@ export default {
     const upload = async (file: File, customParams: Partial<PutObjectCommandInput> = {}) => {
       const s3Client = new S3Client({
         ...config,
-        credentials: fromContainerMetadata({
-          maxRetries: 3,
-          timeout: 0,
+        credentials: fromHttp({
+          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
         }),
       });
 
@@ -143,9 +143,9 @@ export default {
       async getSignedUrl(file: File, customParams: any): Promise<{ url: string }> {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromContainerMetadata({
-            maxRetries: 3,
-            timeout: 0,
+          credentials: fromHttp({
+            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
           }),
         });
         if (!isUrlFromBucket(file.url, config.params.Bucket, baseUrl)) {
@@ -176,9 +176,9 @@ export default {
       async delete(file: File, customParams = {}): Promise<DeleteObjectCommandOutput> {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromContainerMetadata({
-            maxRetries: 3,
-            timeout: 0,
+          credentials: fromHttp({
+            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
           }),
         });
 
