@@ -62,6 +62,7 @@ export interface DefaultOptions extends S3ClientConfig {
 }
 
 export type InitOptions = (DefaultOptions | { s3Options: DefaultOptions }) & {
+  cdn?: string;
   baseUrl?: string;
   rootPath?: string;
   [k: string]: any;
@@ -105,10 +106,17 @@ export default {
     const upload = async (file: File, customParams: Partial<PutObjectCommandInput> = {}) => {
       const s3Client = new S3Client({
         ...config,
-        credentials: fromHttp({
-          awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-          awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
-        }),
+        credentials:
+          process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET
+            ? {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_ACCESS_SECRET,
+              }
+            : fromHttp({
+                awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+                awsContainerAuthorizationTokenFile:
+                  process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+              }),
       });
 
       const fileKey = await getFileKey(file);
@@ -133,6 +141,7 @@ export default {
         // Default protocol to https protocol
         file.url = `https://${upload.Location}`;
       }
+      s3Client.destroy();
     };
 
     return {
@@ -143,10 +152,17 @@ export default {
       async getSignedUrl(file: File, customParams: any): Promise<{ url: string }> {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromHttp({
-            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
-          }),
+          credentials:
+            process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET
+              ? {
+                  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                  secretAccessKey: process.env.AWS_ACCESS_SECRET,
+                }
+              : fromHttp({
+                  awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+                  awsContainerAuthorizationTokenFile:
+                    process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+                }),
         });
         if (!isUrlFromBucket(file.url, config.params.Bucket, baseUrl)) {
           return { url: file.url };
@@ -163,7 +179,10 @@ export default {
           {
             expiresIn: getOr(15 * 60, ['params', 'signedUrlExpires'], config),
           }
-        );
+        ).finally(() => {
+          console.log('detroy client!!');
+          s3Client.destroy();
+        });
 
         return { url };
       },
@@ -176,10 +195,17 @@ export default {
       async delete(file: File, customParams = {}): Promise<DeleteObjectCommandOutput> {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromHttp({
-            awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
-            awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
-          }),
+          credentials:
+            process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET
+              ? {
+                  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                  secretAccessKey: process.env.AWS_ACCESS_SECRET,
+                }
+              : fromHttp({
+                  awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
+                  awsContainerAuthorizationTokenFile:
+                    process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE,
+                }),
         });
 
         const command = await new DeleteObjectCommand({
@@ -187,7 +213,11 @@ export default {
           Key: getFileKey(file),
           ...customParams,
         });
-        return await s3Client.send(command);
+
+        return await s3Client.send(command).finally(() => {
+          console.log('detroy client!!');
+          s3Client.destroy();
+        });
       },
     };
   },

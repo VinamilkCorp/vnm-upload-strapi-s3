@@ -100,7 +100,10 @@ const index = {
     const upload = async (file, customParams = {}) => {
       const s3Client = new S3Client({
         ...config,
-        credentials: fromHttp({
+        credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_ACCESS_SECRET
+        } : fromHttp({
           awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
           awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
         })
@@ -123,6 +126,7 @@ const index = {
       } else {
         file.url = `https://${upload2.Location}`;
       }
+      s3Client.destroy();
     };
     return {
       isPrivate() {
@@ -131,7 +135,10 @@ const index = {
       async getSignedUrl(file, customParams) {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromHttp({
+          credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_ACCESS_SECRET
+          } : fromHttp({
             awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
             awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
           })
@@ -150,7 +157,10 @@ const index = {
           {
             expiresIn: getOr(15 * 60, ["params", "signedUrlExpires"], config)
           }
-        );
+        ).finally(() => {
+          console.log("detroy client!!");
+          s3Client.destroy();
+        });
         return { url };
       },
       async uploadStream(file, customParams = {}) {
@@ -162,7 +172,10 @@ const index = {
       async delete(file, customParams = {}) {
         const s3Client = new S3Client({
           ...config,
-          credentials: fromHttp({
+          credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_SECRET ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_ACCESS_SECRET
+          } : fromHttp({
             awsContainerCredentialsFullUri: process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI,
             awsContainerAuthorizationTokenFile: process.env.AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
           })
@@ -172,7 +185,10 @@ const index = {
           Key: getFileKey(file),
           ...customParams
         });
-        return await s3Client.send(command);
+        return await s3Client.send(command).finally(() => {
+          console.log("detroy client!!");
+          s3Client.destroy();
+        });
       }
     };
   }

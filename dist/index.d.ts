@@ -41,6 +41,7 @@ export interface DefaultOptions extends S3ClientConfig {
 export type InitOptions = (DefaultOptions | {
     s3Options: DefaultOptions;
 }) & {
+    cdn?: string;
     baseUrl?: string;
     rootPath?: string;
     [k: string]: any;
